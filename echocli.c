@@ -83,6 +83,7 @@ main (int argc, char **argv) {
    struct sockaddr_in servaddr;
    struct timeval start, stop;
    /* time how long we have to wait for a connection */
+    fprintf (stderr, "argc:%d argv[0]:%s argv[1]:%s argv[2]:%s\n",argc,argv[0],argv[1],argv[2]);
    CHECK (gettimeofday (&start, NULL));
    set_server_address (&servaddr, argc, argv);
    if ( (sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0){
@@ -90,8 +91,8 @@ main (int argc, char **argv) {
    }
    CHECK (connect(sockfd, (struct sockaddr *) &servaddr, sizeof(servaddr)));
    CHECK (gettimeofday (&stop, NULL));
-   fprintf (stderr, "connection wait time = %ld microseconds\n",
-            (stop.tv_sec - start.tv_sec)*1000000 + (stop.tv_usec - start.tv_usec));
+   fprintf (stderr, "connection wait time = %ld microseconds socket:%d\n",
+            (stop.tv_sec - start.tv_sec)*1000000 + (stop.tv_usec - start.tv_usec),sockfd);
    client_work (sockfd);
    exit (0);
 }

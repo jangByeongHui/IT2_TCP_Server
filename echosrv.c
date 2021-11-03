@@ -46,6 +46,21 @@ server_handoff (int sockfd) {
 
 /* the main per-connection service loop of the server; assumes
    sockfd is a connected socket */
+int check_prime(int n){
+  int isPrime = 1;
+  if(n==1){
+    return 0;
+  }
+  
+  for(int i=2; i<=n/2;i++){
+    if(n%i==0){
+      isPrime=0;
+      break;
+    }
+  }
+  if(isPrime==1) return 1;
+  else return 0;
+}
 void
 serve_connection (int sockfd) {
   ssize_t  n, result;
@@ -61,7 +76,21 @@ serve_connection (int sockfd) {
       perror ("readline failed");
       goto quit;
     }
-    result = writen (&conn, line, n);
+    //remove '\n'
+    for(int i=0;line[i]!=0;i++){
+      if(line[i]=='\n'){
+        line[i]=0;
+        break;
+      }
+    }
+    if(check_prime(atoi(line))==1){
+      strcat(line," is Prime Number\n");
+    }else{
+      strcat(line," is not Prime Number\n");
+    }
+    //send result to client
+    n=strlen(line);
+    result = writen(&conn,line,n);
     if (shutting_down) goto quit;
     if (result != n) {
       perror ("writen failed");

@@ -1,0 +1,16 @@
+==========compilation=============================
+make: Nothing to be done for 'default'.
+==========testing=================================
+==========server outputs===================
+==========stdout==========
+timer: testing  ../multisrv in testdir on Linux ---------------
+==========stderr==========
+timer: received Interrupt
+timer: interrupted
+timer: user 0 ms system 0 ms 
+timer: messages sent: 0 received: 0
+timer: max resident set: 808 page faults: major 1 minor: 58
+==========driver outputs===================
+usage: driver [port number]
+ ./driver
+==========done====================================

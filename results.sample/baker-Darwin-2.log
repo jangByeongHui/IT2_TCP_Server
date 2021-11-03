@@ -1,0 +1,33 @@
+==========baker on Darwin===================================
+==========compilation=============================
+make: Nothing to be done for `default'.
+==========testing=================================
+==========server outputs===================
+==========stdout==========
+timer: ===testing  ../multisrv 2 in P4.sol on Darwin ===========================
+==========stderr==========
+server using port 50557, with 2 threads
+timer: received Interrupt: 2
+timer: interrupted
+server: Interrupted system call
+timer: user 64 ms system 1369 ms 
+timer: messages sent: 90000 received: 90000
+timer: max resident set: 565248 page faults: major 0 minor: 246
+==========driver outputs===================
+driver: (version 2) concurrency = 12; iterations = 10000
+  0: completed 10000 iterations: connection wait time    0 ms, real time  710 ms, CPU time  200 ms
+  1: completed 10000 iterations: connection wait time    0 ms, real time  700 ms, CPU time  200 ms
+  2: completed 10000 iterations: connection wait time    0 ms, real time 1400 ms, CPU time  200 ms
+  3: completed 10000 iterations: connection wait time    0 ms, real time 1400 ms, CPU time  190 ms
+  4: completed 10000 iterations: connection wait time    0 ms, real time 2120 ms, CPU time  210 ms
+  5: completed 10000 iterations: connection wait time    0 ms, real time 2120 ms, CPU time  200 ms
+  6: completed 10000 iterations: connection wait time    0 ms, real time 2810 ms, CPU time  200 ms
+  7: completed 10000 iterations: connection wait time  710 ms, real time 2100 ms, CPU time  190 ms
+  8: completed 10000 iterations: connection wait time  710 ms, real time 2460 ms, CPU time  130 ms
+  9: readline (&conn, recvline, sizeof (recvline)): Connection reset by peer 
+completed    0 iterations: connection wait time  710 ms, real time    0 ms, CPU time    0 ms
+ 10: readline (&conn, recvline, sizeof (recvline)): Connection reset by peer 
+completed    0 iterations: connection wait time  710 ms, real time    0 ms, CPU time    0 ms
+ 11: readline (&conn, recvline, sizeof (recvline)): Connection reset by peer 
+completed    0 iterations: connection wait time  700 ms, real time    0 ms, CPU time    0 ms
+==========done====================================

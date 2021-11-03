@@ -1,0 +1,30 @@
+==========baker on Darwin===================================
+==========compilation=============================
+make: Nothing to be done for `default'.
+==========testing=================================
+==========server outputs===================
+==========stdout==========
+timer: ===testing  ../multisrv 4 in P4.sol on Darwin ===========================
+==========stderr==========
+server using port 50570, with 4 threads
+timer: received Interrupt: 2
+timer: interrupted
+server: Interrupted system call
+timer: user 88 ms system 1914 ms 
+timer: messages sent: 120000 received: 120000
+timer: max resident set: 577536 page faults: major 0 minor: 249
+==========driver outputs===================
+driver: (version 2) concurrency = 12; iterations = 10000
+  0: completed 10000 iterations: connection wait time    0 ms, real time 1300 ms, CPU time  220 ms
+  1: completed 10000 iterations: connection wait time    0 ms, real time 1300 ms, CPU time  210 ms
+  2: completed 10000 iterations: connection wait time    0 ms, real time 1300 ms, CPU time  210 ms
+  3: completed 10000 iterations: connection wait time    0 ms, real time 1300 ms, CPU time  210 ms
+  4: completed 10000 iterations: connection wait time    0 ms, real time 2610 ms, CPU time  210 ms
+  5: completed 10000 iterations: connection wait time    0 ms, real time 2610 ms, CPU time  210 ms
+  6: completed 10000 iterations: connection wait time    0 ms, real time 2610 ms, CPU time  210 ms
+  7: completed 10000 iterations: connection wait time    0 ms, real time 2610 ms, CPU time  210 ms
+  8: completed 10000 iterations: connection wait time    0 ms, real time 3930 ms, CPU time  210 ms
+  9: completed 10000 iterations: connection wait time 1910 ms, real time 2020 ms, CPU time  210 ms
+ 10: completed 10000 iterations: connection wait time 1900 ms, real time 2020 ms, CPU time  210 ms
+ 11: completed 10000 iterations: connection wait time 1900 ms, real time 2020 ms, CPU time  210 ms
+==========done====================================

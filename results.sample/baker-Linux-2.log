@@ -1,0 +1,30 @@
+==========baker on Linux===================================
+==========compilation=============================
+make: Nothing to be done for `default'.
+==========testing=================================
+==========server outputs===================
+==========stdout==========
+timer: ===testing  ../multisrv 2 in testdir on Linux ===========================
+==========stderr==========
+server using port 51378, with 2 threads
+timer: received Interrupt
+timer: interrupted
+server: Interrupted system call
+timer: user 119 ms system 3883 ms 
+timer: messages sent: 0 received: 0
+timer: max resident set: 608 page faults: major 0 minor: 235
+==========driver outputs===================
+driver: (version 2) concurrency = 12; iterations = 10000
+  0: completed 10000 iterations: connection wait time    0 ms, real time  680 ms, CPU time  260 ms
+  1: completed 10000 iterations: connection wait time    0 ms, real time  680 ms, CPU time  460 ms
+  2: completed 10000 iterations: connection wait time    0 ms, real time 1380 ms, CPU time  400 ms
+  3: completed 10000 iterations: connection wait time   10 ms, real time 2090 ms, CPU time  410 ms
+  4: completed 10000 iterations: connection wait time   10 ms, real time 2650 ms, CPU time  330 ms
+  5: completed 10000 iterations: connection wait time   10 ms, real time 1370 ms, CPU time  350 ms
+  6: completed 10000 iterations: connection wait time   10 ms, real time 2390 ms, CPU time  180 ms
+  7: completed 10000 iterations: connection wait time    0 ms, real time 3040 ms, CPU time  360 ms
+  8: completed 10000 iterations: connection wait time    0 ms, real time 3320 ms, CPU time  360 ms
+  9: completed 10000 iterations: connection wait time    0 ms, real time 2090 ms, CPU time  400 ms
+ 10: completed 10000 iterations: connection wait time 3000 ms, real time  620 ms, CPU time  290 ms
+ 11: completed 10000 iterations: connection wait time 3000 ms, real time  670 ms, CPU time  190 ms
+==========done====================================

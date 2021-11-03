@@ -1,0 +1,30 @@
+==========baker on SunOS===================================
+==========compilation=============================
+make: Nothing to be done for `default'.
+==========testing=================================
+==========server outputs===================
+==========stdout==========
+timer: ===testing  ../multisrv 2 in testdir on SunOS ===========================
+==========stderr==========
+server using port 54201, with 2 threads
+timer: received Interrupt
+timer: interrupted
+server: Interrupted system call
+timer: user 350 ms system 1340 ms 
+timer: messages sent: 0 received: 0
+timer: max resident set: 0 page faults: major 0 minor: 0
+==========driver outputs===================
+driver: (version 2) concurrency = 12; iterations = 10000
+  0: completed 10000 iterations: connection wait time    0 ms, real time  350 ms, CPU time  170 ms
+  1: completed 10000 iterations: connection wait time    0 ms, real time  330 ms, CPU time  170 ms
+  2: completed 10000 iterations: connection wait time    0 ms, real time  640 ms, CPU time  170 ms
+  3: completed 10000 iterations: connection wait time    0 ms, real time  380 ms, CPU time  180 ms
+  4: completed 10000 iterations: connection wait time   70 ms, real time  630 ms, CPU time  190 ms
+  5: completed 10000 iterations: connection wait time   20 ms, real time 1730 ms, CPU time  180 ms
+  6: completed 10000 iterations: connection wait time   40 ms, real time  660 ms, CPU time  180 ms
+  7: completed 10000 iterations: connection wait time   10 ms, real time 1310 ms, CPU time  170 ms
+  8: completed 10000 iterations: connection wait time    0 ms, real time 1690 ms, CPU time  170 ms
+  9: completed 10000 iterations: connection wait time   60 ms, real time  950 ms, CPU time  180 ms
+ 10: completed 10000 iterations: connection wait time    0 ms, real time 1370 ms, CPU time  180 ms
+ 11: completed 10000 iterations: connection wait time   20 ms, real time  990 ms, CPU time  190 ms
+==========done====================================

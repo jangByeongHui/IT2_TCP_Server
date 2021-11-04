@@ -25,15 +25,14 @@
 #include "echolib.h"
 #include "checks.h"
 
+#define MAXCLIENT 4
+
 int isPrime(int num){
-
   if(num <= 1) return 0;
-
   for (int i=2; i<num; i++)
   {
     if (num % i == 0) return 0;
   }
-
   return 1;
 }
 
@@ -44,7 +43,6 @@ void
 server_handoff (int sockfd) {
   pthread_t t_id;
   pthread_create(&t_id, NULL, serve_connection, (void*)&sockfd);
-  pthread_detach(t_id);
 
 /* NOTE: You will need to completely rewrite this function, so
    that it hands off the connection to one of your server threads,
@@ -62,6 +60,7 @@ server_handoff (int sockfd) {
    sockfd is a connected socket */
 void*
 serve_connection (void* sockfd) {
+  pthread_detach(pthread_self());
   int clnt_sockfd = *((int*) sockfd);
   ssize_t  n, result;
   char line[MAXLINE];

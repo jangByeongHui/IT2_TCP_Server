@@ -25,15 +25,27 @@ void
 client_work (int sockfd) {
   connection_t conn;
   char *p;
+  char st[24];
   char sendline[MAXLINE], recvline[MAXLINE];
   connection_init (&conn);
   conn.sockfd = sockfd;
   while ((p = fgets (sendline, sizeof (sendline), stdin))) {
     CHECK (writen (&conn, sendline, strlen (sendline)));
-    if (readline (&conn, recvline, sizeof (recvline)) <= 0)
-      ERR_QUIT ("str_cli: server terminated connection prematurely");
-    fprintf (stdout, "%s", recvline); /* rely that line contains "/n" */
-    fflush (stdout);
+    strcpy(st, sendline);
+    for(int i = 0; i < atoi(st); i++)
+    {
+      sprintf(sendline, "%d", rand()%20);
+      strcat(sendline, "\n");
+      writen (&conn, sendline, strlen(sendline));
+    }
+
+    for(int i = 0; i < atoi(st); i++)
+    {
+      if (readline (&conn, recvline, sizeof (recvline)) <= 0)
+        ERR_QUIT ("str_cli: server terminated connection prematurely");
+      fprintf (stdout, "%s", recvline);
+      fflush (stdout);
+    }
   }
   /* null pointer returned by fgets indicates EOF */
 }
@@ -83,7 +95,6 @@ main (int argc, char **argv) {
    struct sockaddr_in servaddr;
    struct timeval start, stop;
    /* time how long we have to wait for a connection */
-    fprintf (stderr, "argc:%d argv[0]:%s argv[1]:%s argv[2]:%s\n",argc,argv[0],argv[1],argv[2]);
    CHECK (gettimeofday (&start, NULL));
    set_server_address (&servaddr, argc, argv);
    if ( (sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0){
@@ -91,8 +102,8 @@ main (int argc, char **argv) {
    }
    CHECK (connect(sockfd, (struct sockaddr *) &servaddr, sizeof(servaddr)));
    CHECK (gettimeofday (&stop, NULL));
-   fprintf (stderr, "connection wait time = %ld microseconds socket:%d\n",
-            (stop.tv_sec - start.tv_sec)*1000000 + (stop.tv_usec - start.tv_usec),sockfd);
+   fprintf (stderr, "connection wait time = %ld microseconds\n",
+            (stop.tv_sec - start.tv_sec)*1000000 + (stop.tv_usec - start.tv_usec));
    client_work (sockfd);
    exit (0);
 }

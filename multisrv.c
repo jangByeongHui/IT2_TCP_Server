@@ -25,12 +25,26 @@
 #include "echolib.h"
 #include "checks.h"
 
-void
-serve_connection (int sockfd);
+int isPrime(int num){
+
+  if(num <= 1) return 0;
+
+  for (int i=2; i<num; i++)
+  {
+    if (num % i == 0) return 0;
+  }
+
+  return 1;
+}
+
+void*
+serve_connection (void* sockfd);
 
 void
 server_handoff (int sockfd) {
-  serve_connection (sockfd);
+  pthread_t t_id;
+  pthread_create(&t_id, NULL, serve_connection, (void*)&sockfd);
+  pthread_detach(t_id);
 
 /* NOTE: You will need to completely rewrite this function, so
    that it hands off the connection to one of your server threads,
@@ -42,19 +56,22 @@ server_handoff (int sockfd) {
    or anything else between it and the note in the main program
    body.  However, you are free to change anything in this file if
    you feel it is necessary for your design. */
-  
 }
 
 /* the main per-connection service loop of the server; assumes
    sockfd is a connected socket */
-void
-serve_connection (int sockfd) {
+void*
+serve_connection (void* sockfd) {
+  int clnt_sockfd = *((int*) sockfd);
   ssize_t  n, result;
   char line[MAXLINE];
   connection_t conn;
   connection_init (&conn);
-  conn.sockfd = sockfd;
-  while (! shutting_down) {
+  conn.sockfd = clnt_sockfd;
+  char send[1024] = "";
+  char st[20];
+  int num;
+  while (!shutting_down) {
     if ((n = readline (&conn, line, MAXLINE)) == 0) goto quit;
     /* connection closed by other end */
     if (shutting_down) goto quit;
@@ -62,11 +79,24 @@ serve_connection (int sockfd) {
       perror ("readline failed");
       goto quit;
     }
-    result = writen (&conn, line, n);
-    if (shutting_down) goto quit;
-    if (result != n) {
-      perror ("writen failed");
-      goto quit;
+    strcpy(st, line);
+    for(int i = 0; i < atoi(st); i++)
+    {
+      n = readline (&conn, line, MAXLINE);
+      num = atoi(line);
+      sprintf(send, "%d", num);
+      if(isPrime(num) == 1)
+      {
+        strcat(send, " is prime number\n");
+      }else{
+        strcat(send, " is not prime number\n");
+      }
+      result = writen (&conn, send, strlen(send));
+      if (shutting_down) goto quit;
+      if (result != strlen(send)) {
+        perror ("writen failed");
+        goto quit;
+      }
     }
   }
 quit:

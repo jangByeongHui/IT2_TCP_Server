@@ -44,30 +44,45 @@ server_handoff (int sockfd) {
   
 }
 
+int isPrime(int num){
+
+  if(num <= 1) return 0;
+
+  for (int i=2; i<num; i++)
+  {
+    if (num % i == 0) return 0;
+  }
+
+  return 1;
+}
+
+int *generateRandomNumber(char line[]){
+
+  srand(time(NULL));
+  int N = atoi(line);
+
+  int *numbers = (int*)malloc(sizeof(int) * N);
+
+  for(int i=0; i<N; i++)
+  {
+    numbers[i] = rand() % 20;
+  }
+
+  return numbers;
+}
+
 /* the main per-connection service loop of the server; assumes
    sockfd is a connected socket */
-int check_prime(int n){
-  int isPrime = 1;
-  if(n==1){
-    return 0;
-  }
-  
-  for(int i=2; i<=n/2;i++){
-    if(n%i==0){
-      isPrime=0;
-      break;
-    }
-  }
-  if(isPrime==1) return 1;
-  else return 0;
-}
 void
 serve_connection (int sockfd) {
   ssize_t  n, result;
   char line[MAXLINE];
+  char send[1024] = "";
+  char st[20];
   connection_t conn;
   connection_init (&conn);
   conn.sockfd = sockfd;
+  int num;
   while (! shutting_down) {
     if ((n = readline (&conn, line, MAXLINE)) == 0) goto quit;
     /* connection closed by other end */
@@ -76,25 +91,24 @@ serve_connection (int sockfd) {
       perror ("readline failed");
       goto quit;
     }
-    //remove '\n'
-    for(int i=0;line[i]!=0;i++){
-      if(line[i]=='\n'){
-        line[i]=0;
-        break;
+    strcpy(st, line);
+    for(int i = 0; i < atoi(st); i++)
+    {
+      n = readline (&conn, line, MAXLINE);
+      num = atoi(line);
+      sprintf(send, "%d", num);
+      if(isPrime(num) == 1)
+      {
+        strcat(send, " is prime number\n");
+      }else{
+        strcat(send, " is not prime number\n");
       }
-    }
-    if(check_prime(atoi(line))==1){
-      strcat(line," is Prime Number\n");
-    }else{
-      strcat(line," is not Prime Number\n");
-    }
-    //send result to client
-    n=strlen(line);
-    result = writen(&conn,line,n);
-    if (shutting_down) goto quit;
-    if (result != n) {
-      perror ("writen failed");
-      goto quit;
+      result = writen (&conn, send, strlen(send));
+      if (shutting_down) goto quit;
+      if (result != strlen(send)) {
+        perror ("writen failed");
+        goto quit;
+      }
     }
   }
 quit:
@@ -156,7 +170,7 @@ main (int argc, char **argv) {
 
   install_siginthandler();
   open_listening_socket (&listenfd);
-  CHECK (listen (listenfd, 4));
+  CHECK (listen (listenfd, 1));
   /* allow up to 4 queued connection requests before refusing */
   while (! shutting_down) {
     errno = 0;

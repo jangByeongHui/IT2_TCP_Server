@@ -27,12 +27,15 @@
 
 #define MAXCLIENT 4
 #define MAX 100
+#define T_MAX 1000000
 int clientNum = 0;
 int getFD = -1;
 int id = 0;
 
+pthread_mutex_t mutex_q;
 pthread_mutex_t mutex;
 pthread_cond_t cond;
+pthread_cond_t q_cond;
 
 // typedef struct Work {  
 //     int connfd;           
@@ -45,6 +48,46 @@ int front=-1;
 int rear=-1;
 int queue[MAX];
  
+typedef struct task{
+  int sockfd;
+  int num;
+}task_t;
+
+task_t t_queue[T_MAX];
+int t_front = -1;
+int t_rear = -1;
+
+int Task_IsEmpty(void){
+    if(t_front==t_rear)//front와 rear가 같으면 큐는 비어있는 상태 
+        return 1;
+    else return 0;
+}
+int Task_IsFull(void){
+    int tmp=(t_rear+1)%T_MAX; //원형 큐에서 rear+1을 MAX로 나눈 나머지값이
+    if(tmp==t_front)//front와 같으면 큐는 가득차 있는 상태 
+        return 1;
+    else
+        return 0;
+}
+void Task_addq(int fd, int n){
+    if(IsFull())
+        printf("Queue is Full.\n");
+    else{
+         t_rear = (t_rear+1)%T_MAX;
+         t_queue[t_rear].sockfd = fd;
+         t_queue[t_rear].num = n;
+        }
+
+}
+task_t Task_deleteq(){
+    if(IsEmpty())
+        printf("Queue is Empty.\n");
+    else{
+        t_front = (t_front+1)%T_MAX;
+        return t_queue[t_front];
+    }
+}
+
 int IsEmpty(void){
     if(front==rear)//front와 rear가 같으면 큐는 비어있는 상태 
         return 1;
@@ -100,17 +143,55 @@ server_handoff (int sockfd) {
    body.  However, you are free to change anything in this file if
    you feel it is necessary for your design. */
   
+  pthread_mutex_lock(&mutex);
   getFD = sockfd;
   sem_post(&consume);
   fprintf(stdout,"getfd: %d clientNUM:%d\n",sockfd,clientNum);
+  pthread_mutex_unlock(&mutex);
   // pthread_create(&t_id[clientNum],NULL,serve_connection,(void *)&sockfd);
+}
+
+
+void* worker_thread(void* arg)
+{
+  ssize_t result;
+  char send[1024];
+  connection_t conn;
+  connection_init (&conn);
+  pthread_t id;
+  id = pthread_self();
+  printf("2. %ud\n", id);
+  while(1)
+  {
+    task_t task;
+    pthread_mutex_lock(&mutex_q);
+    while(Task_IsEmpty() == 1){
+      pthread_cond_wait(&q_cond, &mutex_q);
+    }
+    task = Task_deleteq();
+    conn.sockfd = task.sockfd;
+    int num = task.num;
+    sprintf(send, "%d", task.num);
+    if(isPrime(num) == 1)
+    {
+      strcat(send, " is prime number\n");
+    }else{
+      strcat(send, " is not prime number\n");
+    }
+    usleep(50000);
+    result = writen (&conn, send, strlen(send));
+
+    printf("item: %d fd: %d tid: %u\n", task.num, task.sockfd, id);
+    pthread_mutex_unlock(&mutex_q);
+  }
 }
 
 /* the main per-connection service loop of the server; assumes
    sockfd is a connected socket */
 void*
-serve_connection (void* tid) {
+serve_connection (void* i) {
   pthread_t id;
+  printf("count: %d\n", *(int*)i);
   id = pthread_self();
   connection_t conn;
   connection_init (&conn);
@@ -118,15 +199,18 @@ serve_connection (void* tid) {
   while(1)
   {
     sem_wait(&consume);
+    pthread_mutex_lock(&mutex);
     ssize_t  n, result;
     char line[MAXLINE];
     conn.sockfd = getFD;
     addq(getFD);
     getFD = -1;
+    pthread_mutex_unlock(&mutex);
     char send[1024] = "";
     char st[20];
     int num;
     while (!shutting_down) {
+      printf("1. %ud\n", id);
       if ((n = readline (&conn, line, MAXLINE)) == 0) goto quit;
       /* connection closed by other end */
       if (shutting_down) goto quit;
@@ -137,26 +221,14 @@ serve_connection (void* tid) {
       strcpy(st, line);
       for(int i = 0; i < atoi(st); i++)
       {
-        printf("tid: %d\n", id);
         n = readline (&conn, line, MAXLINE);
         num = atoi(line);
-        sprintf(send, "%d", num);
-        if(isPrime(num) == 1)
-        {
-          strcat(send, " is prime number\n");
-          char temp[1024]="";
-          strcat(send,temp);
-        }else{
-          strcat(send, " is not prime number\n");
-          char temp[1024]="";
-          strcat(send,temp);
+        pthread_mutex_lock(&mutex_q);
+        if(Task_IsFull != 1){
+          Task_addq(conn.sockfd, num);
+          pthread_cond_signal(&q_cond);
         }
-        result = writen (&conn, send, strlen(send));
-        if (shutting_down) goto quit;
-        if (result != strlen(send)) {
-          perror ("writen failed");
-          goto quit;
-        }
+        pthread_mutex_unlock(&mutex_q);
       }
     }
   quit:
@@ -214,19 +286,26 @@ main (int argc, char **argv) {
   struct sockaddr_in cliaddr;
   pthread_t t_id;
 
-  int i = 0;
   pthread_mutex_init(&mutex, NULL);
-  //int i=0;
+  pthread_cond_init(&cond, NULL);
+  int a=0;
 
   /* NOTE: To make this multi-threaded, You may need insert
      additional initialization code here, but you will not need to
      modify anything below here, though you are permitted to
      change anything in this file if you feel it is necessary for
      your design */
+    
   sem_init(&consume, 0, 0);
-  for(i;i<MAXCLIENT;i++){
-      pthread_create(&t_id,NULL,serve_connection,(void *)&i);
+  for(int i = 0;i<MAXCLIENT;i++){
+      pthread_create(&t_id,NULL,serve_connection,(void *)&a);
+      a++;
     }
+  for(int i = 0;i<10;i++){
+    pthread_create(&t_id,NULL,worker_thread,(void *)&i);
+  }
+
+
   install_siginthandler();
   open_listening_socket (&listenfd);
   CHECK (listen (listenfd, 4));

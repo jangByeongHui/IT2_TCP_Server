@@ -45,46 +45,6 @@ int front=-1;
 int rear=-1;
 int queue[MAX];
  
-typedef struct task{
-  int sockfd;
-  int num;
-}task_t;
-
-task_t t_queue[MAX];
-int t_front = -1;
-int t_rear = -1;
-
-int Task_IsEmpty(void){
-    if(front==rear)//front와 rear가 같으면 큐는 비어있는 상태 
-        return 1;
-    else return 0;
-}
-int Task_IsFull(void){
-    int tmp=(rear+1)%MAX; //원형 큐에서 rear+1을 MAX로 나눈 나머지값이
-    if(tmp==front)//front와 같으면 큐는 가득차 있는 상태 
-        return 1;
-    else
-        return 0;
-}
-void Task_addq(int fd, int n){
-    if(IsFull())
-        printf("Queue is Full.\n");
-    else{
-         rear = (rear+1)%MAX;
-         t_queue[rear].sockfd = fd;
-         t_queue[rear].num = n;
-        }
-
-}
-task_t Task_deleteq(){
-    if(IsEmpty())
-        printf("Queue is Empty.\n");
-    else{
-        front = (front+1)%MAX;
-        return t_queue[front];
-    }
-}
-
 int IsEmpty(void){
     if(front==rear)//front와 rear가 같으면 큐는 비어있는 상태 
         return 1;
@@ -140,25 +100,10 @@ server_handoff (int sockfd) {
    body.  However, you are free to change anything in this file if
    you feel it is necessary for your design. */
   
-  pthread_mutex_lock(&mutex);
   getFD = sockfd;
   sem_post(&consume);
   fprintf(stdout,"getfd: %d clientNUM:%d\n",sockfd,clientNum);
-  pthread_mutex_unlock(&mutex);
   // pthread_create(&t_id[clientNum],NULL,serve_connection,(void *)&sockfd);
-}
-
-
-void* worker_thread(void* arg)
-{
-  while(1)
-  {
-    pthread_cond_wait(&cond, &mutex);
-    for(int i = 0; i < MAX; i++)
-    {
-      printf("QUEUE: %d\n", t_queue[i].num);
-    }
-  }
 }
 
 /* the main per-connection service loop of the server; assumes
@@ -173,18 +118,15 @@ serve_connection (void* tid) {
   while(1)
   {
     sem_wait(&consume);
-    pthread_mutex_lock(&mutex);
     ssize_t  n, result;
     char line[MAXLINE];
     conn.sockfd = getFD;
     addq(getFD);
     getFD = -1;
-    pthread_mutex_unlock(&mutex);
     char send[1024] = "";
     char st[20];
     int num;
     while (!shutting_down) {
-      printf("1. %ud\n", id);
       if ((n = readline (&conn, line, MAXLINE)) == 0) goto quit;
       /* connection closed by other end */
       if (shutting_down) goto quit;
@@ -195,14 +137,26 @@ serve_connection (void* tid) {
       strcpy(st, line);
       for(int i = 0; i < atoi(st); i++)
       {
+        printf("tid: %d\n", id);
         n = readline (&conn, line, MAXLINE);
         num = atoi(line);
-        pthread_mutex_lock(&mutex);
-        if(Task_IsFull != 1){
-          Task_addq(conn.sockfd, num);
-          pthread_cond_signal(&cond);
+        sprintf(send, "%d", num);
+        if(isPrime(num) == 1)
+        {
+          strcat(send, " is prime number\n");
+          char temp[1024]="";
+          strcat(send,temp);
+        }else{
+          strcat(send, " is not prime number\n");
+          char temp[1024]="";
+          strcat(send,temp);
         }
-        pthread_mutex_unlock(&mutex);
+        result = writen (&conn, send, strlen(send));
+        if (shutting_down) goto quit;
+        if (result != strlen(send)) {
+          perror ("writen failed");
+          goto quit;
+        }
       }
     }
   quit:
@@ -262,7 +216,6 @@ main (int argc, char **argv) {
 
   int i = 0;
   pthread_mutex_init(&mutex, NULL);
-  pthread_cond_init(&cond, NULL);
   //int i=0;
 
   /* NOTE: To make this multi-threaded, You may need insert
@@ -274,8 +227,6 @@ main (int argc, char **argv) {
   for(i;i<MAXCLIENT;i++){
       pthread_create(&t_id,NULL,serve_connection,(void *)&i);
     }
-  pthread_create(&t_id, NULL, worker_thread, (void*)&i);
-
   install_siginthandler();
   open_listening_socket (&listenfd);
   CHECK (listen (listenfd, 4));

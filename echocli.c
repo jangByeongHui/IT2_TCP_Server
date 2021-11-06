@@ -39,13 +39,13 @@ client_work (int sockfd) {
       writen (&conn, sendline, strlen(sendline));
     }
 
-    for(int i = 0; i < atoi(st); i++)
+    /*for(int i = 0; i < atoi(st); i++)
     {
       if (readline (&conn, recvline, sizeof (recvline)) <= 0)
         ERR_QUIT ("str_cli: server terminated connection prematurely");
       fprintf (stdout, "%s", recvline);
       fflush (stdout);
-    }
+    }*/
   }
   /* null pointer returned by fgets indicates EOF */
 }

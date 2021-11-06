@@ -26,11 +26,10 @@
 #include "checks.h"
 
 #define MAXCLIENT 4
-#define MAX 100
+#define MAX 1024
 int clientNum = 0;
 int getFD = -1;
 int id = 0;
-
 pthread_mutex_t mutex;
 pthread_cond_t cond;
 
@@ -41,6 +40,15 @@ pthread_cond_t cond;
 
 // 세마포어 생성
 sem_t consume;
+typedef struct _task {
+  connection_t *conn_addr;
+  int num;
+}task;
+
+
+int tfront=-1;
+int trear=-1;
+task tqueue[MAX];
 int front=-1;
 int rear=-1;
 int queue[MAX];
@@ -74,6 +82,39 @@ int deleteq(){
         return queue[front];
     }
 }
+int IsTaskEmpty(void){
+    if(tfront==trear)//front와 rear가 같으면 큐는 비어있는 상태 
+        return 1;
+    else return 0;
+}
+int IsTaskFull(void){
+    int tmp=(trear+1)%MAX; //원형 큐에서 rear+1을 MAX로 나눈 나머지값이
+    if(tmp==tfront)//front와 같으면 큐는 가득차 있는 상태 
+        return 1;
+    else
+        return 0;
+}
+void taddq(connection_t *conn,int num){
+    if(IsTaskFull())
+        printf("Queue is Full.\n");
+    else{
+         task temp;
+         temp.conn_addr=conn;
+         temp.num=num;
+         trear = (trear+1)%MAX;
+         tqueue[trear]=temp;
+        }
+
+}
+task tdeleteq(){
+    if(IsTaskEmpty()){
+      printf("Queue is Empty.\n");
+    }
+    else{
+        tfront = (tfront+1)%MAX;
+        return tqueue[tfront];
+    }
+}
 int isPrime(int num){
   if(num <= 1) return 0;
   for (int i=2; i<num; i++)
@@ -82,6 +123,8 @@ int isPrime(int num){
   }
   return 1;
 }
+
+
 
 void*
 serve_connection (void* sockfd);
@@ -99,9 +142,12 @@ server_handoff (int sockfd) {
    or anything else between it and the note in the main program
    body.  However, you are free to change anything in this file if
    you feel it is necessary for your design. */
-  
-  getFD = sockfd;
+  //fprintf(stdout,"1\n");
+  //pthread_mutex_lock(&mutex);
+  //getFD = sockfd;
+  addq(sockfd);
   sem_post(&consume);
+  //pthread_mutex_unlock(&mutex);
   fprintf(stdout,"getfd: %d clientNUM:%d\n",sockfd,clientNum);
   // pthread_create(&t_id[clientNum],NULL,serve_connection,(void *)&sockfd);
 }
@@ -117,15 +163,15 @@ serve_connection (void* tid) {
   conn.sockfd = -1;
   while(1)
   {
+    //pthread_mutex_lock(&mutex);
     sem_wait(&consume);
-    ssize_t  n, result;
+    //pthread_mutex_unlock(&mutex);
+    //fprintf(stdout,"serve_connection is activate: pid %lu\n",id);
+    ssize_t  n;
     char line[MAXLINE];
-    conn.sockfd = getFD;
-    addq(getFD);
-    getFD = -1;
-    char send[1024] = "";
-    char st[20];
-    int num;
+    conn.sockfd=deleteq();
+    //conn.sockfd = getFD;
+    //getFD = -1;
     while (!shutting_down) {
       if ((n = readline (&conn, line, MAXLINE)) == 0) goto quit;
       /* connection closed by other end */
@@ -134,35 +180,48 @@ serve_connection (void* tid) {
         perror ("readline failed");
         goto quit;
       }
-      strcpy(st, line);
-      for(int i = 0; i < atoi(st); i++)
-      {
-        printf("tid: %d\n", id);
-        n = readline (&conn, line, MAXLINE);
-        num = atoi(line);
-        sprintf(send, "%d", num);
-        if(isPrime(num) == 1)
-        {
-          strcat(send, " is prime number\n");
-          char temp[1024]="";
-          strcat(send,temp);
-        }else{
-          strcat(send, " is not prime number\n");
-          char temp[1024]="";
-          strcat(send,temp);
-        }
-        result = writen (&conn, send, strlen(send));
-        if (shutting_down) goto quit;
-        if (result != strlen(send)) {
-          perror ("writen failed");
-          goto quit;
-        }
-      }
+      taddq(&conn,atoi(line));
+      fprintf(stdout,"serve_connection Response: %d PID:%u\n",atoi(line),id);
+      pthread_mutex_lock(&mutex);
+      pthread_cond_signal(&cond);
+      pthread_mutex_unlock(&mutex);
+
+      if (shutting_down) goto quit;
     }
-  quit:
-    deleteq();
+    quit:
     clientNum--;
     CHECK (close (conn.sockfd));
+  
+  }
+  
+}
+
+void* 
+worker (void* tid){
+  pthread_t id;
+  id = pthread_self();
+  task temp;
+  ssize_t result;
+  while(1)
+  {
+    pthread_cond_wait(&cond,&mutex);
+    //pthread_mutex_lock(&mutex);
+    temp=tdeleteq();
+    //pthread_mutex_lock(&mutex);
+
+    //fprintf(stdout,"request:%d pid: %lu\n",temp.num,id);
+    char answer[1024]="";
+    fprintf(stdout,"worker Respone: %d PID:%u\n",temp.num,id);
+    if(isPrime(temp.num)==1){
+      sprintf(answer,"%d is Prime Number\n",temp.num); 
+    }else{
+      sprintf(answer,"%d is not Prime Number\n",temp.num);
+    }
+    usleep(50000);
+    result = writen (temp.conn_addr, answer, strlen(answer));
+    if (result != strlen(answer)) {
+      perror ("writen failed");
+    }
   }
 }
 
@@ -214,8 +273,9 @@ main (int argc, char **argv) {
   struct sockaddr_in cliaddr;
   pthread_t t_id;
 
-  int i = 0;
   pthread_mutex_init(&mutex, NULL);
+  pthread_cond_init(&cond,NULL);
+  sem_init(&consume, 0, 0);
   //int i=0;
 
   /* NOTE: To make this multi-threaded, You may need insert
@@ -223,10 +283,14 @@ main (int argc, char **argv) {
      modify anything below here, though you are permitted to
      change anything in this file if you feel it is necessary for
      your design */
-  sem_init(&consume, 0, 0);
-  for(i;i<MAXCLIENT;i++){
+  //Make acceptor Trhead Pool
+  for(int i=0;i<MAXCLIENT;i++){
       pthread_create(&t_id,NULL,serve_connection,(void *)&i);
     }
+  //Make Worker Thread Pool
+  for(int i=0;i<4;i++){
+    pthread_create(&t_id,NULL,worker,(void *)&i);
+  }
   install_siginthandler();
   open_listening_socket (&listenfd);
   CHECK (listen (listenfd, 4));

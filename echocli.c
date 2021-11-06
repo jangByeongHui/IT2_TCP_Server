@@ -25,21 +25,20 @@ void
 client_work (int sockfd) {
   connection_t conn;
   char *p;
-  char st[24];
+  //char st[24];
   char sendline[MAXLINE], recvline[MAXLINE];
   connection_init (&conn);
   conn.sockfd = sockfd;
   while ((p = fgets (sendline, sizeof (sendline), stdin))) {
-    CHECK (writen (&conn, sendline, strlen (sendline)));
-    strcpy(st, sendline);
-    for(int i = 0; i < atoi(st); i++)
+    for(int i = 0; i < atoi(sendline); i++)
     {
-      sprintf(sendline, "%d", rand()%20);
-      strcat(sendline, "\n");
-      writen (&conn, sendline, strlen(sendline));
+      char st[24]="";
+      sprintf(st, "%d", rand()%20);
+      strcat(st, "\n");
+      writen (&conn, st, strlen(st));
     }
 
-    for(int i = 0; i < atoi(st); i++)
+    for(int i = 0; i < atoi(sendline); i++)
     {
       if (readline (&conn, recvline, sizeof (recvline)) <= 0)
         ERR_QUIT ("str_cli: server terminated connection prematurely");

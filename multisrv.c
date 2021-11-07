@@ -70,7 +70,7 @@ int Task_IsFull(void){
         return 0;
 }
 void Task_addq(int fd, int n){
-    if(IsFull())
+    if(Task_IsFull())
         printf("Queue is Full.\n");
     else{
          t_rear = (t_rear+1)%T_MAX;
@@ -80,7 +80,7 @@ void Task_addq(int fd, int n){
 
 }
 task_t Task_deleteq(){
-    if(IsEmpty())
+    if(Task_IsEmpty())
         printf("Queue is Empty.\n");
     else{
         t_front = (t_front+1)%T_MAX;
@@ -143,11 +143,9 @@ server_handoff (int sockfd) {
    body.  However, you are free to change anything in this file if
    you feel it is necessary for your design. */
   
-  pthread_mutex_lock(&mutex);
-  getFD = sockfd;
+  addq(sockfd);
   sem_post(&consume);
   fprintf(stdout,"getfd: %d clientNUM:%d\n",sockfd,clientNum);
-  pthread_mutex_unlock(&mutex);
   // pthread_create(&t_id[clientNum],NULL,serve_connection,(void *)&sockfd);
 }
 
@@ -178,7 +176,6 @@ void* worker_thread(void* arg)
     }else{
       strcat(send, " is not prime number\n");
     }
-    usleep(50000);
     result = writen (&conn, send, strlen(send));
 
     printf("item: %d fd: %d tid: %u\n", task.num, task.sockfd, id);
@@ -195,18 +192,12 @@ serve_connection (void* i) {
   id = pthread_self();
   connection_t conn;
   connection_init (&conn);
-  conn.sockfd = -1;
   while(1)
   {
     sem_wait(&consume);
-    pthread_mutex_lock(&mutex);
     ssize_t  n, result;
     char line[MAXLINE];
-    conn.sockfd = getFD;
-    addq(getFD);
-    getFD = -1;
-    pthread_mutex_unlock(&mutex);
-    char send[1024] = "";
+    conn.sockfd = deleteq();
     char st[20];
     int num;
     while (!shutting_down) {
@@ -218,21 +209,15 @@ serve_connection (void* i) {
         perror ("readline failed");
         goto quit;
       }
-      strcpy(st, line);
-      for(int i = 0; i < atoi(st); i++)
-      {
-        n = readline (&conn, line, MAXLINE);
-        num = atoi(line);
+      num = atoi(line);
+      if(Task_IsFull != 1){
         pthread_mutex_lock(&mutex_q);
-        if(Task_IsFull != 1){
-          Task_addq(conn.sockfd, num);
-          pthread_cond_signal(&q_cond);
-        }
+        Task_addq(conn.sockfd, num);
+        pthread_cond_signal(&q_cond);
         pthread_mutex_unlock(&mutex_q);
       }
     }
   quit:
-    deleteq();
     clientNum--;
     CHECK (close (conn.sockfd));
   }

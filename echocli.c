@@ -24,13 +24,15 @@
 void
 client_work (int sockfd) {
   connection_t conn;
+  struct timeval inner_start, inner_stop;
   char *p;
   char st[24];
   char sendline[MAXLINE], recvline[MAXLINE];
   connection_init (&conn);
   conn.sockfd = sockfd;
+  
   while ((p = fgets (sendline, sizeof (sendline), stdin))) {
-    CHECK (writen (&conn, sendline, strlen (sendline)));
+    CHECK (gettimeofday (&inner_start, NULL));
     strcpy(st, sendline);
     for(int i = 0; i < atoi(st); i++)
     {
@@ -38,16 +40,31 @@ client_work (int sockfd) {
       strcat(sendline, "\n");
       writen (&conn, sendline, strlen(sendline));
     }
-
-    /*for(int i = 0; i < atoi(st); i++)
+    
+    for(int i = 0; i < atoi(st); i++)
     {
       if (readline (&conn, recvline, sizeof (recvline)) <= 0)
         ERR_QUIT ("str_cli: server terminated connection prematurely");
       fprintf (stdout, "%s", recvline);
       fflush (stdout);
-    }*/
+    }
+    CHECK (gettimeofday (&inner_stop, NULL));
+    fprintf (stderr, "response n wait time = %ld microseconds\n",
+            (inner_stop.tv_sec - inner_start.tv_sec)*1000000 + (inner_stop.tv_usec - inner_start.tv_usec));
   }
   /* null pointer returned by fgets indicates EOF */
+}
+
+void* client_write(void* sockfd)
+{
+  int* clnt_sockfd = *((int*)sockfd);
+  connection_t conn;
+  char receiveline[MAXLINE];
+  connection_init(&conn);
+  conn.sockfd = clnt_sockfd;
+  while(1){
+
+  }
 }
 
 /* fetch server port number from main program argument list */
@@ -91,6 +108,7 @@ set_server_address (struct sockaddr_in *servaddr, int argc, char **argv) {
 
 int
 main (int argc, char **argv) {
+  
    int sockfd;
    struct sockaddr_in servaddr;
    struct timeval start, stop;

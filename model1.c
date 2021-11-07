@@ -145,7 +145,6 @@ serve_connection (void* tid) {
       }
       int request=atoi(line);
       char answer[1024]="";
-      for(int i=0;i<999999;i++);
       if(isPrime(request)==1){
         sprintf(answer,"%d is Prime Number\n",request); 
       }else{

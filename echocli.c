@@ -30,22 +30,18 @@ client_work (int sockfd) {
   connection_init (&conn);
   conn.sockfd = sockfd;
   while ((p = fgets (sendline, sizeof (sendline), stdin))) {
-    for(int i = 0; i < atoi(sendline); i++)
-    {
-      char st[24]="";
-      sprintf(st, "%d", rand()%20);
-      strcat(st, "\n");
-      writen (&conn, st, strlen(st));
-    }
-
-    for(int i = 0; i < atoi(sendline); i++)
-    {
-      if (readline (&conn, recvline, sizeof (recvline)) <= 0)
+    struct timeval inner_start, inner_stop;
+    CHECK (gettimeofday (&inner_start, NULL));
+    writen(&conn,sendline,strlen(sendline));
+    if (readline (&conn, recvline, sizeof (recvline)) <= 0)
         ERR_QUIT ("str_cli: server terminated connection prematurely");
-      fprintf (stdout, "%s", recvline);
-      fflush (stdout);
-    }
+    fprintf (stdout, "%s", recvline);
+    fflush (stdout);
+    CHECK (gettimeofday (&inner_stop, NULL));
+    fprintf (stderr, "response time = %ld microseconds\n",
+            (inner_stop.tv_sec - inner_start.tv_sec)*1000000 + (inner_stop.tv_usec - inner_start.tv_usec));
   }
+      
   /* null pointer returned by fgets indicates EOF */
 }
 

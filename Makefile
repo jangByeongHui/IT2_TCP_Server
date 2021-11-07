@@ -4,7 +4,7 @@ LIBS= -pthread
 DEPS=config.h Makefile echolib.h checks.h
 
 # the program or programs we want to build
-EXECUTABLES=echocli echosrv multisrv driver timer
+EXECUTABLES=echocli echosrv multisrv driver timer model1 model2
 
 # If you just type "make", it will default to "make all".
 default: $(EXECUTABLES)
@@ -17,6 +17,12 @@ echosrv: echolib.o echosrv.c $(DEPS)
 	$(CC) $(CCOPTS) -o $@ echolib.o $(LIBS) $@.c
 
 multisrv: echolib.o multisrv.c $(DEPS)
+	$(CC) $(CCOPTS) -o $@ echolib.o $(LIBS) $@.c
+
+model1: echolib.o model1.c $(DEPS)
+	$(CC) $(CCOPTS) -o $@ echolib.o $(LIBS) $@.c
+
+model2: echolib.o model2.c $(DEPS)
 	$(CC) $(CCOPTS) -o $@ echolib.o $(LIBS) $@.c
 
 echolib.o: echolib.c $(DEPS)

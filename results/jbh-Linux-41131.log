@@ -4,13 +4,13 @@ make: Nothing to be done for 'default'.
 ==========testing=================================
 ==========server outputs===================
 ==========stdout==========
-timer: testing  ../multisrv in testdir on Linux ---------------
+timer: testing  ../multisrv 41131 in testdir on Linux ---------------
 ==========stderr==========
 timer: received Interrupt
 timer: interrupted
 timer: user 0 ms system 0 ms 
 timer: messages sent: 0 received: 0
-timer: max resident set: 804 page faults: major 0 minor: 24
+timer: max resident set: 748 page faults: major 0 minor: 23
 ==========driver outputs===================
 usage: driver [port number]
  ./driver
